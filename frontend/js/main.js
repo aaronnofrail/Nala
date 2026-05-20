@@ -122,29 +122,57 @@ async function getAIResponse() {
 }
 
 // Voice input
+// Voice input dengan sistem deteksi error
 function toggleVoice() {
     const btn = document.getElementById('micBtn');
+    
     if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
         showToast('Browser tidak mendukung input suara');
         return;
     }
+    
     if (recognition && btn.classList.contains('recording')) {
         recognition.stop();
         btn.classList.remove('recording');
         return;
     }
+    
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     recognition = new SR();
-    recognition.lang = 'id-ID';
+    recognition.lang = 'id-ID'; // Menggunakan bahasa Indonesia
     recognition.interimResults = false;
+    
+    // 1. Menangkap dan menampilkan error secara spesifik
+    recognition.onerror = (event) => {
+        console.error("❌ Mic terhenti karena error:", event.error);
+        if (event.error === 'not-allowed') {
+            showToast("Akses mic ditolak browser/sistem!");
+        } else if (event.error === 'no-speech') {
+            showToast("Suara tidak terdengar, coba lagi.");
+        } else {
+            showToast("Mic error: " + event.error);
+        }
+        btn.classList.remove('recording');
+    };
+    
+    // 2. Menangkap hasil suara
     recognition.onresult = (e) => {
         document.getElementById('chatInput').value = e.results[0][0].transcript;
         btn.classList.remove('recording');
     };
-    recognition.onerror = () => btn.classList.remove('recording');
-    recognition.onend = () => btn.classList.remove('recording');
-    recognition.start();
-    btn.classList.add('recording');
+    
+    // 3. Menangkap saat mic otomatis mati
+    recognition.onend = () => {
+        console.log("ℹ️ Sesi mikrofon berakhir.");
+        btn.classList.remove('recording');
+    };
+    
+    try {
+        recognition.start();
+        btn.classList.add('recording');
+    } catch (err) {
+        console.error("❌ Gagal memulai mikrofon:", err);
+    }
 }
 
 // MOOD TRACKER 
