@@ -349,7 +349,7 @@ function playAmbient(btn) {
     const fileUrl = btn.dataset.file;
     currentAudio = new Audio(fileUrl);
     currentAudio.loop = true;
-    currentAudio.volume = isMuted ? 0 : document.getElementById('audioProgress').value / 100;
+    currentAudio.volume = isMuted ? 0 : 1.0;
 
     currentAudio.play().then(() => {
         ambientPlaying = true;
