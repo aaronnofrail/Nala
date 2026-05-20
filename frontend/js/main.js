@@ -90,7 +90,7 @@ async function getAIResponse() {
     const systemPrompt = `Kamu adalah Nala, AI teman kesehatan mental yang empatik... (pastikan prompt kamu lengkap di sini)`;
 
     try {
-        const response = await fetch('/api/chat', {
+        const response = await fetch('https://nala-be.vercel.app/api/chat', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
