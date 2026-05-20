@@ -125,23 +125,23 @@ async function getAIResponse() {
 // Voice input dengan sistem deteksi error
 function toggleVoice() {
     const btn = document.getElementById('micBtn');
-    
+
     if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
         showToast('Browser tidak mendukung input suara');
         return;
     }
-    
+
     if (recognition && btn.classList.contains('recording')) {
         recognition.stop();
         btn.classList.remove('recording');
         return;
     }
-    
+
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     recognition = new SR();
     recognition.lang = 'id-ID'; // Menggunakan bahasa Indonesia
     recognition.interimResults = false;
-    
+
     // 1. Menangkap dan menampilkan error secara spesifik
     recognition.onerror = (event) => {
         console.error("❌ Mic terhenti karena error:", event.error);
@@ -154,19 +154,19 @@ function toggleVoice() {
         }
         btn.classList.remove('recording');
     };
-    
+
     // 2. Menangkap hasil suara
     recognition.onresult = (e) => {
         document.getElementById('chatInput').value = e.results[0][0].transcript;
         btn.classList.remove('recording');
     };
-    
+
     // 3. Menangkap saat mic otomatis mati
     recognition.onend = () => {
         console.log("ℹ️ Sesi mikrofon berakhir.");
         btn.classList.remove('recording');
     };
-    
+
     try {
         recognition.start();
         btn.classList.add('recording');
@@ -322,121 +322,80 @@ function newAffirmation() {
     }, 300);
 }
 
-// Ambient sound via Web Audio API
-let audioCtx = null;
-let ambientNodes = [];
-let ambientGain = null;
+// ===== AUDIO PLAYER (MP3) =====
+let currentAudio = null;
 let ambientPlaying = false;
 let isMuted = false;
-let currentAmbient = null;
-
-function getAudioCtx() {
-    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    return audioCtx;
-}
+let currentBtn = null;
 
 function stopAmbient(btn) {
-    ambientNodes.forEach(n => { try { n.stop(); } catch (e) { } });
-    ambientNodes = [];
-    ambientPlaying = false;
-    currentAmbient = null;
+    if (currentAudio) {
+        currentAudio.pause();
+        currentAudio.currentTime = 0;
+    }
     document.querySelectorAll('.ambient-btn').forEach(b => b.classList.remove('active'));
     if (btn) btn.classList.remove('active');
+
     document.getElementById('playIcon').style.display = 'block';
     document.getElementById('pauseIcon').style.display = 'none';
+    ambientPlaying = false;
 }
 
 function playAmbient(btn) {
     stopAmbient(null);
-    document.querySelectorAll('.ambient-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
-    const freq = parseFloat(btn.dataset.freq);
-    const label = btn.textContent.trim();
-    currentAmbient = { freq, label };
-    startAmbientSound(freq);
-}
+    currentBtn = btn;
 
-function startAmbientSound(baseFreq) {
-    const ctx = getAudioCtx();
-    ambientGain = ctx.createGain();
-    ambientGain.gain.value = isMuted ? 0 : 0.15;
-    ambientGain.connect(ctx.destination);
+    const fileUrl = btn.dataset.file;
+    currentAudio = new Audio(fileUrl);
+    currentAudio.loop = true;
+    currentAudio.volume = isMuted ? 0 : document.getElementById('audioProgress').value / 100;
 
-    // Create layered tones for ambient sound
-    const freqs = [baseFreq, baseFreq * 1.5, baseFreq * 0.75, baseFreq * 2];
-    freqs.forEach((f, i) => {
-        const osc = ctx.createOscillator();
-        const g = ctx.createGain();
-        osc.type = i % 2 === 0 ? 'sine' : 'triangle';
-        osc.frequency.value = f;
-        g.gain.value = 0.08 / (i + 1);
-        osc.connect(g);
-        g.connect(ambientGain);
-        osc.start();
-        ambientNodes.push(osc);
+    currentAudio.play().then(() => {
+        ambientPlaying = true;
+        document.getElementById('playIcon').style.display = 'none';
+        document.getElementById('pauseIcon').style.display = 'block';
+    }).catch(err => {
+        console.error("Gagal memutar audio:", err);
+        showToast("Gagal memutar audio. Pastikan file MP3 tersedia.");
     });
-
-    // Add noise for rain/ocean effect
-    if (baseFreq === 174 || baseFreq === 528) {
-        const bufferSize = ctx.sampleRate * 2;
-        const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-        const data = noiseBuffer.getChannelData(0);
-        for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
-        const noise = ctx.createBufferSource();
-        noise.buffer = noiseBuffer;
-        noise.loop = true;
-        const noiseGain = ctx.createGain();
-        noiseGain.gain.value = 0.04;
-        const filter = ctx.createBiquadFilter();
-        filter.type = 'lowpass';
-        filter.frequency.value = baseFreq === 174 ? 800 : 1200;
-        noise.connect(filter);
-        filter.connect(noiseGain);
-        noiseGain.connect(ambientGain);
-        noise.start();
-        ambientNodes.push(noise);
-    }
-
-    ambientPlaying = true;
-    document.getElementById('playIcon').style.display = 'none';
-    document.getElementById('pauseIcon').style.display = 'block';
-    // Animate progress
-    animateAudioProgress();
-}
-
-let progressInterval = null;
-let progressVal = 0;
-function animateAudioProgress() {
-    clearInterval(progressInterval);
-    progressInterval = setInterval(() => {
-        if (!ambientPlaying) { clearInterval(progressInterval); return; }
-        progressVal = (progressVal + 0.3) % 100;
-        document.getElementById('audioProgress').value = progressVal;
-    }, 300);
 }
 
 function toggleAmbientPlay() {
-    if (!currentAmbient) { showToast('Pilih jenis suara dulu ya!'); return; }
+    if (!currentAudio && !currentBtn) {
+        showToast('Pilih jenis suara dulu ya!');
+        return;
+    }
+
     if (ambientPlaying) {
-        ambientNodes.forEach(n => { try { n.disconnect(); } catch (e) { } });
-        ambientNodes = [];
+        currentAudio.pause();
         ambientPlaying = false;
-        clearInterval(progressInterval);
         document.getElementById('playIcon').style.display = 'block';
         document.getElementById('pauseIcon').style.display = 'none';
     } else {
-        startAmbientSound(currentAmbient.freq);
+        if (!currentAudio && currentBtn) {
+            playAmbient(currentBtn);
+        } else {
+            currentAudio.play();
+            ambientPlaying = true;
+            document.getElementById('playIcon').style.display = 'none';
+            document.getElementById('pauseIcon').style.display = 'block';
+        }
     }
 }
 
 function setAmbientVol(val) {
-    if (ambientGain) ambientGain.gain.value = val / 100 * 0.3;
+    if (currentAudio) {
+        currentAudio.volume = val / 100;
+    }
 }
 
 function toggleMute() {
     isMuted = !isMuted;
     document.getElementById('volIcon').textContent = isMuted ? '🔇' : '🔊';
-    if (ambientGain) ambientGain.gain.value = isMuted ? 0 : 0.15;
+    if (currentAudio) {
+        currentAudio.muted = isMuted;
+    }
 }
 
 // ===== MENTAL EDU =====

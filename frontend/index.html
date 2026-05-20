@@ -278,10 +278,13 @@
           <div class="relax-section-title">Audio Relaksasi</div>
           <div class="relax-sub">Pilih suasana yang kamu inginkan</div>
           <div class="ambient-sounds" id="ambientSounds">
-            <button class="ambient-btn" data-freq="174" onclick="playAmbient(this)">🌊 Ombak Laut</button>
-            <button class="ambient-btn" data-freq="528" onclick="playAmbient(this)">🌧️ Hujan Ringan</button>
-            <button class="ambient-btn" data-freq="432" onclick="playAmbient(this)">🌿 Hutan Tenang</button>
-            <button class="ambient-btn" data-freq="396" onclick="playAmbient(this)">🎵 Meditasi</button>
+            <button class="ambient-btn" data-file="./audio/ombak.mp3" onclick="playAmbient(this)">🌊 Ombak Laut</button>
+            <button class="ambient-btn" data-file="./audio/hujan.mp3" onclick="playAmbient(this)">🌧️ Hujan
+              Ringan</button>
+            <button class="ambient-btn" data-file="./audio/hutan.mp3" onclick="playAmbient(this)">🌿 Hutan
+              Tenang</button>
+            <button class="ambient-btn" data-file="./audio/meditasi.mp3" onclick="playAmbient(this)">🎵
+              Meditasi</button>
             <button class="ambient-btn" onclick="stopAmbient(this)">⏹ Stop</button>
           </div>
           <div class="audio-player-wrap">
