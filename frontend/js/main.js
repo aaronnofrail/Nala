@@ -1,0 +1,568 @@
+let currentPage = 'home';
+function showPage(name) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-links button').forEach(b => b.classList.remove('active'));
+    document.getElementById('page-' + name).classList.add('active');
+    const btn = document.getElementById('nav-' + name);
+    if (btn) btn.classList.add('active');
+    currentPage = name;
+    window.scrollTo(0, 0);
+    if (name === 'mood') renderMoodChart();
+    if (name === 'edu') renderArticles();
+}
+
+function toggleMobileMenu() {
+    const m = document.getElementById('mobileMenu');
+    m.classList.toggle('open');
+}
+
+// INIT TIME 
+document.getElementById('initTime').textContent = formatTime(new Date());
+function formatTime(d) {
+    return d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+}
+
+// NALA AI CHAT
+let chatHistory = [];
+let isAITyping = false;
+let recognition = null;
+
+async function sendMessage() {
+    if (isAITyping) return;
+    const input = document.getElementById('chatInput');
+    const msg = input.value.trim();
+    if (!msg) return;
+    input.value = '';
+    appendMsg('user', msg);
+    chatHistory.push({ role: 'user', content: msg });
+    await getAIResponse();
+}
+
+function appendMsg(role, text) {
+    const wrap = document.getElementById('chatMessages');
+    const row = document.createElement('div');
+    row.className = 'msg-row ' + (role === 'user' ? 'user' : 'ai');
+    const avatar = document.createElement('div');
+    avatar.className = 'msg-avatar';
+    avatar.textContent = role === 'user' ? 'K' : 'N';
+    const msgWrap = document.createElement('div');
+    const bubble = document.createElement('div');
+    bubble.className = 'msg-bubble';
+    bubble.textContent = text;
+    const timeEl = document.createElement('div');
+    timeEl.className = 'msg-time';
+    timeEl.textContent = formatTime(new Date());
+    msgWrap.appendChild(bubble);
+    msgWrap.appendChild(timeEl);
+    row.appendChild(avatar);
+    row.appendChild(msgWrap);
+    wrap.appendChild(row);
+    wrap.scrollTop = wrap.scrollHeight;
+}
+
+function showTyping() {
+    const wrap = document.getElementById('chatMessages');
+    const row = document.createElement('div');
+    row.className = 'msg-row ai';
+    row.id = 'typingIndicator';
+    const avatar = document.createElement('div');
+    avatar.className = 'msg-avatar';
+    avatar.textContent = 'N';
+    const ind = document.createElement('div');
+    ind.className = 'typing-indicator';
+    ind.innerHTML = '<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>';
+    row.appendChild(avatar);
+    row.appendChild(ind);
+    wrap.appendChild(row);
+    wrap.scrollTop = wrap.scrollHeight;
+}
+
+function removeTyping() {
+    const el = document.getElementById('typingIndicator');
+    if (el) el.remove();
+}
+
+async function getAIResponse() {
+    isAITyping = true;
+    document.getElementById('sendBtn').disabled = true;
+    showTyping();
+
+    const systemPrompt = `Kamu adalah Nala, AI teman kesehatan mental yang empatik... (pastikan prompt kamu lengkap di sini)`;
+
+    try {
+        const response = await fetch('/api/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                systemPrompt: systemPrompt,
+                messages: chatHistory
+            })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.error || 'Terjadi kesalahan di server');
+        }
+
+        const aiMsg = data.reply ? data.reply : 'Maaf, aku tidak bisa merespons saat ini. Coba lagi ya 💚';
+
+        removeTyping();
+        appendMsg('ai', aiMsg);
+        chatHistory.push({ role: 'model', content: aiMsg });
+
+    } catch (err) {
+        console.error('Error dari frontend:', err.message);
+        removeTyping();
+        appendMsg('ai', 'Maaf, ada gangguan koneksi. Pastikan server lokalmu berjalan dan coba lagi 💚');
+    }
+
+    isAITyping = false;
+    document.getElementById('sendBtn').disabled = false;
+}
+
+// Voice input
+function toggleVoice() {
+    const btn = document.getElementById('micBtn');
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+        showToast('Browser tidak mendukung input suara');
+        return;
+    }
+    if (recognition && btn.classList.contains('recording')) {
+        recognition.stop();
+        btn.classList.remove('recording');
+        return;
+    }
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    recognition = new SR();
+    recognition.lang = 'id-ID';
+    recognition.interimResults = false;
+    recognition.onresult = (e) => {
+        document.getElementById('chatInput').value = e.results[0][0].transcript;
+        btn.classList.remove('recording');
+    };
+    recognition.onerror = () => btn.classList.remove('recording');
+    recognition.onend = () => btn.classList.remove('recording');
+    recognition.start();
+    btn.classList.add('recording');
+}
+
+// MOOD TRACKER 
+let moodData = JSON.parse(localStorage.getItem('nala_moods') || '[]');
+let moodChart = null;
+
+const moodValues = { 'Sangat Senang': 5, 'Senang': 4, 'Netral': 3, 'Sedih': 2, 'Cemas': 2, 'Marah': 1, 'Lelah': 2 };
+const moodEmojis = { 'Sangat Senang': '😄', 'Senang': '🙂', 'Netral': '😐', 'Sedih': '😔', 'Cemas': '😰', 'Marah': '😠', 'Lelah': '😴' };
+
+function saveMood() {
+    const mood = document.getElementById('moodSelect').value;
+    const note = document.getElementById('moodNote').value.trim();
+    if (!mood) { showToast('Pilih suasana hati dulu ya!'); return; }
+    const entry = { date: new Date().toLocaleDateString('id-ID'), mood, note, ts: Date.now() };
+    moodData.unshift(entry);
+    localStorage.setItem('nala_moods', JSON.stringify(moodData));
+    document.getElementById('moodSelect').value = '';
+    document.getElementById('moodNote').value = '';
+    renderMoodHistory();
+    renderMoodChart();
+    showToast('Mood berhasil disimpan! 💚');
+}
+
+function deleteMood(idx) {
+    moodData.splice(idx, 1);
+    localStorage.setItem('nala_moods', JSON.stringify(moodData));
+    renderMoodHistory();
+    renderMoodChart();
+}
+
+function renderMoodHistory() {
+    const el = document.getElementById('moodHistory');
+    if (!moodData.length) {
+        el.innerHTML = '<div class="mood-empty">Belum ada data mood. Mulai catat hari ini!</div>';
+        return;
+    }
+    el.innerHTML = moodData.map((d, i) => `
+    <div class="mood-history-item">
+      <span><span class="mood-emoji">${moodEmojis[d.mood] || ''}</span>${d.date} – ${d.mood}${d.note ? ' : ' + d.note : ''}</span>
+      <button class="mood-delete" onclick="deleteMood(${i})" title="Hapus">✕</button>
+    </div>
+  `).join('');
+}
+
+function renderMoodChart() {
+    renderMoodHistory();
+    const ctx = document.getElementById('moodChart').getContext('2d');
+    const sorted = [...moodData].reverse().slice(-10);
+    if (moodChart) moodChart.destroy();
+    if (!sorted.length) {
+        moodChart = new Chart(ctx, { type: 'line', data: { labels: [], datasets: [{ data: [] }] }, options: { plugins: { legend: { display: false } } } });
+        return;
+    }
+    const labels = sorted.map(d => d.date);
+    const values = sorted.map(d => moodValues[d.mood] || 3);
+    moodChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels,
+            datasets: [{
+                data: values,
+                borderColor: '#5a9e6a',
+                backgroundColor: 'rgba(90,158,106,0.08)',
+                borderWidth: 2.5,
+                pointBackgroundColor: '#3a7d44',
+                pointRadius: 5,
+                tension: 0.4,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { min: 0, max: 5, ticks: { stepSize: 1, color: '#7a9c80' }, grid: { color: '#eef7f0' } },
+                x: { ticks: { color: '#7a9c80', maxRotation: 30 }, grid: { display: false } }
+            }
+        }
+    });
+}
+
+// RELAXATION
+let breathRunning = false;
+let breathTimer = null;
+let breathSessions = 0;
+const breathPhases = [
+    { label: 'Tarik Napas...', dur: 4000, class: 'breathing-in' },
+    { label: 'Tahan...', dur: 4000, class: 'breathing-hold' },
+    { label: 'Hembuskan...', dur: 4000, class: 'breathing-out' },
+    { label: 'Istirahat...', dur: 2000, class: '' }
+];
+let breathPhaseIdx = 0;
+
+function toggleBreath() {
+    if (breathRunning) {
+        breathRunning = false;
+        clearTimeout(breathTimer);
+        document.getElementById('breathBtn').textContent = 'Mulai';
+        document.getElementById('breathLabel').textContent = 'Siap memulai...';
+        const c = document.getElementById('breathCircle');
+        c.className = 'breath-circle-outer';
+        return;
+    }
+    breathRunning = true;
+    breathPhaseIdx = 0;
+    document.getElementById('breathBtn').textContent = 'Berhenti';
+    runBreathPhase();
+}
+
+function runBreathPhase() {
+    if (!breathRunning) return;
+    const phase = breathPhases[breathPhaseIdx];
+    document.getElementById('breathLabel').textContent = phase.label;
+    const c = document.getElementById('breathCircle');
+    c.className = 'breath-circle-outer';
+    void c.offsetWidth;
+    if (phase.class) c.className = 'breath-circle-outer ' + phase.class;
+    breathTimer = setTimeout(() => {
+        breathPhaseIdx = (breathPhaseIdx + 1) % breathPhases.length;
+        if (breathPhaseIdx === 0) {
+            breathSessions++;
+            document.getElementById('breathCounter').textContent = 'Sesi: ' + breathSessions;
+        }
+        runBreathPhase();
+    }, phase.dur);
+}
+
+const affirmations = [
+    '"Hari ini aku memilih untuk tenang dan bersyukur."',
+    '"Aku cukup. Aku berharga. Aku layak dicintai."',
+    '"Setiap napas membawa ketenangan ke dalam diriku."',
+    '"Aku punya kekuatan untuk melewati hari ini."',
+    '"Perasaanku valid dan aku boleh merasa seperti ini."',
+    '"Aku memilih untuk fokus pada hal-hal baik hari ini."',
+    '"Aku tumbuh lebih kuat setiap harinya."',
+    '"Kedamaian ada di dalam diriku, bukan di luar sana."',
+    '"Aku berhak untuk istirahat dan memulihkan diri."',
+    '"Aku percaya pada perjalananku sendiri."'
+];
+
+function newAffirmation() {
+    const el = document.getElementById('affirmText');
+    el.style.opacity = '0';
+    setTimeout(() => {
+        el.textContent = affirmations[Math.floor(Math.random() * affirmations.length)];
+        el.style.opacity = '1';
+    }, 300);
+}
+
+// Ambient sound via Web Audio API
+let audioCtx = null;
+let ambientNodes = [];
+let ambientGain = null;
+let ambientPlaying = false;
+let isMuted = false;
+let currentAmbient = null;
+
+function getAudioCtx() {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    return audioCtx;
+}
+
+function stopAmbient(btn) {
+    ambientNodes.forEach(n => { try { n.stop(); } catch (e) { } });
+    ambientNodes = [];
+    ambientPlaying = false;
+    currentAmbient = null;
+    document.querySelectorAll('.ambient-btn').forEach(b => b.classList.remove('active'));
+    if (btn) btn.classList.remove('active');
+    document.getElementById('playIcon').style.display = 'block';
+    document.getElementById('pauseIcon').style.display = 'none';
+}
+
+function playAmbient(btn) {
+    stopAmbient(null);
+    document.querySelectorAll('.ambient-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const freq = parseFloat(btn.dataset.freq);
+    const label = btn.textContent.trim();
+    currentAmbient = { freq, label };
+    startAmbientSound(freq);
+}
+
+function startAmbientSound(baseFreq) {
+    const ctx = getAudioCtx();
+    ambientGain = ctx.createGain();
+    ambientGain.gain.value = isMuted ? 0 : 0.15;
+    ambientGain.connect(ctx.destination);
+
+    // Create layered tones for ambient sound
+    const freqs = [baseFreq, baseFreq * 1.5, baseFreq * 0.75, baseFreq * 2];
+    freqs.forEach((f, i) => {
+        const osc = ctx.createOscillator();
+        const g = ctx.createGain();
+        osc.type = i % 2 === 0 ? 'sine' : 'triangle';
+        osc.frequency.value = f;
+        g.gain.value = 0.08 / (i + 1);
+        osc.connect(g);
+        g.connect(ambientGain);
+        osc.start();
+        ambientNodes.push(osc);
+    });
+
+    // Add noise for rain/ocean effect
+    if (baseFreq === 174 || baseFreq === 528) {
+        const bufferSize = ctx.sampleRate * 2;
+        const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+        const data = noiseBuffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+        const noise = ctx.createBufferSource();
+        noise.buffer = noiseBuffer;
+        noise.loop = true;
+        const noiseGain = ctx.createGain();
+        noiseGain.gain.value = 0.04;
+        const filter = ctx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.value = baseFreq === 174 ? 800 : 1200;
+        noise.connect(filter);
+        filter.connect(noiseGain);
+        noiseGain.connect(ambientGain);
+        noise.start();
+        ambientNodes.push(noise);
+    }
+
+    ambientPlaying = true;
+    document.getElementById('playIcon').style.display = 'none';
+    document.getElementById('pauseIcon').style.display = 'block';
+    // Animate progress
+    animateAudioProgress();
+}
+
+let progressInterval = null;
+let progressVal = 0;
+function animateAudioProgress() {
+    clearInterval(progressInterval);
+    progressInterval = setInterval(() => {
+        if (!ambientPlaying) { clearInterval(progressInterval); return; }
+        progressVal = (progressVal + 0.3) % 100;
+        document.getElementById('audioProgress').value = progressVal;
+    }, 300);
+}
+
+function toggleAmbientPlay() {
+    if (!currentAmbient) { showToast('Pilih jenis suara dulu ya!'); return; }
+    if (ambientPlaying) {
+        ambientNodes.forEach(n => { try { n.disconnect(); } catch (e) { } });
+        ambientNodes = [];
+        ambientPlaying = false;
+        clearInterval(progressInterval);
+        document.getElementById('playIcon').style.display = 'block';
+        document.getElementById('pauseIcon').style.display = 'none';
+    } else {
+        startAmbientSound(currentAmbient.freq);
+    }
+}
+
+function setAmbientVol(val) {
+    if (ambientGain) ambientGain.gain.value = val / 100 * 0.3;
+}
+
+function toggleMute() {
+    isMuted = !isMuted;
+    document.getElementById('volIcon').textContent = isMuted ? '🔇' : '🔊';
+    if (ambientGain) ambientGain.gain.value = isMuted ? 0 : 0.15;
+}
+
+// ===== MENTAL EDU =====
+const articles = [
+    {
+        title: 'Bagaimana Pikiran Negatif Terbentuk',
+        preview: 'Pikiran negatif sering kali muncul sebagai respon otomatis dari stres. Dengan mengenali pola pikir ini, kita bisa menggantinya dengan sudut pandang yang lebih sehat.',
+        full: `<p>Pikiran negatif adalah bagian normal dari pengalaman manusia, namun ketika menjadi pola yang dominan, dapat memengaruhi kesehatan mental secara signifikan.</p>
+<p>Menurut penelitian psikologi kognitif, pikiran negatif sering muncul sebagai "distorsi kognitif" — cara otak menyederhanakan realita secara tidak akurat. Beberapa contoh umum: all-or-nothing thinking (hitam-putih), catastrophizing (membayangkan skenario terburuk), dan mind reading (menebak pikiran orang lain).</p>
+<p>Cara mengatasinya:</p>
+<p>1. <strong>Kenali polanya</strong> — Ketika pikiran negatif muncul, tanyakan: "Apakah ini fakta atau asumsi?"</p>
+<p>2. <strong>Tantang pikiran tersebut</strong> — Cari bukti yang bertentangan dengan pikiran negatifmu.</p>
+<p>3. <strong>Ganti dengan perspektif yang lebih realistis</strong> — Bukan selalu positif, tapi seimbang dan akurat.</p>
+<p>Latihan journaling dan mindfulness terbukti efektif membantu mengenali dan mengubah pola pikir negatif.</p>`
+    },
+    {
+        title: 'Dampak Tidur terhadap Kesehatan Mental',
+        preview: 'Tidur yang cukup membantu menstabilkan suasana hati dan menurunkan risiko kecemasan. Prioritaskan pola tidur yang teratur untuk menjaga keseimbangan mental.',
+        full: `<p>Hubungan antara tidur dan kesehatan mental bersifat dua arah: masalah mental dapat mengganggu tidur, dan kurang tidur dapat memperburuk kondisi mental.</p>
+<p>Penelitian menunjukkan bahwa orang yang tidur kurang dari 6 jam per malam memiliki risiko lebih tinggi mengalami depresi dan kecemasan. Selama tidur, otak memproses emosi dan membuang racun metabolik.</p>
+<p><strong>Tips tidur yang lebih baik:</strong></p>
+<p>• Tidur dan bangun di waktu yang sama setiap hari, termasuk akhir pekan.</p>
+<p>• Hindari layar elektronik minimal 30 menit sebelum tidur.</p>
+<p>• Jaga kamar tetap gelap, sejuk, dan tenang.</p>
+<p>• Hindari kafein setelah pukul 14.00.</p>
+<p>• Coba teknik relaksasi seperti deep breathing atau progressive muscle relaxation sebelum tidur.</p>`
+    },
+    {
+        title: 'Mengelola Kecemasan Sehari-hari',
+        preview: 'Kecemasan adalah respons normal, namun bisa dikelola dengan strategi yang tepat. Pelajari teknik sederhana yang bisa kamu praktekan kapan saja.',
+        full: `<p>Kecemasan adalah respons alami tubuh terhadap ancaman atau ketidakpastian. Namun ketika menjadi berlebihan, dapat mengganggu kualitas hidup.</p>
+<p><strong>Teknik 5-4-3-2-1 (Grounding):</strong></p>
+<p>Saat cemas melanda, fokus pada: 5 hal yang bisa kamu lihat, 4 hal yang bisa kamu sentuh, 3 hal yang bisa kamu dengar, 2 hal yang bisa kamu cium, 1 hal yang bisa kamu rasakan.</p>
+<p><strong>Box Breathing:</strong> Tarik napas 4 hitungan → tahan 4 hitungan → hembuskan 4 hitungan → tahan 4 hitungan. Ulangi 4-6 kali.</p>
+<p><strong>Journaling:</strong> Tuliskan apa yang kamu cemaskan dan tanyakan pada dirimu: "Seberapa mungkin ini terjadi? Apa yang bisa aku lakukan jika ini terjadi?"</p>`
+    },
+    {
+        title: 'Pentingnya Koneksi Sosial untuk Kesehatan Mental',
+        preview: 'Manusia adalah makhluk sosial. Hubungan yang sehat dengan orang lain adalah salah satu fondasi utama kesehatan mental yang baik.',
+        full: `<p>Penelitian konsisten menunjukkan bahwa orang dengan hubungan sosial yang kuat memiliki kesehatan mental yang lebih baik, umur yang lebih panjang, dan pemulihan dari penyakit yang lebih cepat.</p>
+<p>Kesepian kronis terbukti sama berbahayanya dengan merokok 15 batang per hari bagi kesehatan fisik dan mental.</p>
+<p><strong>Cara membangun koneksi sosial yang sehat:</strong></p>
+<p>• Luangkan waktu berkualitas bersama orang-orang yang kamu sayangi, bukan hanya secara kuantitas.</p>
+<p>• Jadilah pendengar yang baik — fokus pada lawan bicara tanpa menghakimi.</p>
+<p>• Bergabung dengan komunitas atau grup yang memiliki minat serupa.</p>
+<p>• Jangan ragu meminta bantuan ketika kamu membutuhkannya.</p>
+<p>• Ekspresikan rasa terima kasih dan apresiasi kepada orang-orang di sekitarmu.</p>`
+    }
+];
+
+function renderArticles() {
+    const grid = document.getElementById('articlesGrid');
+    grid.innerHTML = articles.map((a, i) => `
+    <div class="article-card" onclick="openArticle(${i})">
+      <h3>${a.title}</h3>
+      <p>${a.preview}</p>
+      <span class="article-link">Baca Selengkapnya →</span>
+    </div>
+  `).join('');
+}
+
+function openArticle(idx) {
+    const a = articles[idx];
+    const modal = document.getElementById('articleModal');
+    modal.style.display = 'flex';
+    modal.innerHTML = `
+    <div class="modal-overlay" onclick="if(event.target===this)closeModal()">
+      <div class="modal-box">
+        <button class="modal-close" onclick="closeModal()">✕</button>
+        <h2 class="modal-title">${a.title}</h2>
+        <div class="modal-body">${a.full}</div>
+      </div>
+    </div>
+  `;
+}
+
+function closeModal() {
+    document.getElementById('articleModal').style.display = 'none';
+}
+
+const dailyTips = [
+    'Luangkan 5 menit untuk bernapas dalam-dalam dan fokus pada momen sekarang.',
+    'Tulis 3 hal yang kamu syukuri hari ini, sekecil apapun itu.',
+    'Lakukan satu kebaikan kecil untuk orang lain — ini juga menyehatkan dirimu sendiri.',
+    'Matikan notifikasi selama 30 menit dan nikmati waktu tanpa gangguan.',
+    'Minum air putih yang cukup — hidrasi memengaruhi suasana hati dan konsentrasi.',
+    'Berjalan kaki 10-15 menit di luar ruangan untuk meningkatkan mood secara alami.',
+    'Hubungi seseorang yang sudah lama tidak kamu sapa — koneksi sosial sangat penting.',
+    'Rapikan satu sudut ruanganmu — lingkungan yang bersih memengaruhi kejernihan pikiran.',
+    'Dengarkan musik yang membuatmu merasa baik selama beberapa menit.',
+    'Istirahat dari media sosial selama setengah hari dan perhatikan perubahannya.'
+];
+
+function newDailyTip() {
+    const el = document.getElementById('dailyTipText');
+    el.style.opacity = '0';
+    setTimeout(() => {
+        el.textContent = dailyTips[Math.floor(Math.random() * dailyTips.length)];
+        el.style.opacity = '1';
+    }, 300);
+}
+
+// Activities
+let activities = JSON.parse(localStorage.getItem('nala_activities') || 'null') || [
+    { text: 'Jalan kaki santai di luar ruangan 🌿', done: false },
+    { text: 'Menulis 3 hal yang kamu syukuri hari ini ✍️', done: false },
+    { text: 'Mendengarkan musik yang membuatmu tenang 🎵', done: false },
+    { text: 'Mendengarkan podcast inspiratif 🎧', done: false }
+];
+
+function saveActivities() { localStorage.setItem('nala_activities', JSON.stringify(activities)); }
+
+function renderActivities() {
+    const el = document.getElementById('activitiesList');
+    el.innerHTML = activities.map((a, i) => `
+    <div class="activity-item">
+      <div class="activity-check ${a.done ? 'checked' : ''}" onclick="toggleActivity(${i})"></div>
+      <span class="activity-text ${a.done ? 'done' : ''}">${a.text}</span>
+      <button class="mood-delete" onclick="removeActivity(${i})" title="Hapus" style="margin-left:auto">✕</button>
+    </div>
+  `).join('') || '<div class="mood-empty">Tambahkan aktivitas positifmu!</div>';
+}
+
+function toggleActivity(idx) {
+    activities[idx].done = !activities[idx].done;
+    saveActivities(); renderActivities();
+}
+
+function removeActivity(idx) {
+    activities.splice(idx, 1);
+    saveActivities(); renderActivities();
+}
+
+function addActivity() {
+    const input = document.getElementById('newActivityInput');
+    const text = input.value.trim();
+    if (!text) return;
+    activities.push({ text, done: false });
+    saveActivities(); renderActivities();
+    input.value = '';
+}
+
+// ===== TOAST =====
+function showToast(msg) {
+    const existing = document.querySelector('.toast');
+    if (existing) existing.remove();
+    const t = document.createElement('div');
+    t.className = 'toast';
+    t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 3100);
+}
+
+// ===== INIT =====
+renderMoodHistory();
+renderActivities();
+renderArticles();

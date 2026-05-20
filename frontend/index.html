@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nala – Teman Cerita Anda</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&display=swap"
+    rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="./style/style.css">
+</head>
+
+<body>
+  <!-- BG Blobs -->
+  <div class="blob-wrap">
+    <svg viewBox="0 0 400 400" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path
+        d="M340 80 C380 120 390 200 360 260 C330 320 250 360 180 350 C110 340 60 290 40 220 C20 150 50 70 110 40 C170 10 300 40 340 80Z"
+        fill="#8aba8f" />
+    </svg>
+  </div>
+  <div class="blob-wrap2">
+    <svg viewBox="0 0 400 400" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path
+        d="M60 320 C20 280 10 200 40 140 C70 80 150 40 220 50 C290 60 340 110 360 180 C380 250 350 330 290 360 C230 390 100 360 60 320Z"
+        fill="#5a9e6a" />
+    </svg>
+  </div>
+
+  <!-- NAV -->
+  <nav>
+    <div class="nav-logo" onclick="showPage('home')">Nala</div>
+    <div class="nav-links">
+      <button id="nav-nala" onclick="showPage('nala')">Nala AI</button>
+      <button id="nav-mood" onclick="showPage('mood')">Mood Tracker</button>
+      <button id="nav-relax" onclick="showPage('relax')">Relaxation</button>
+      <button id="nav-edu" onclick="showPage('edu')">MentalEdu</button>
+    </div>
+    <button class="hamburger" id="hamburger" onclick="toggleMobileMenu()">
+      <span></span><span></span><span></span>
+    </button>
+  </nav>
+
+  <!-- Mobile Menu -->
+  <div class="mobile-menu" id="mobileMenu">
+    <button onclick="showPage('nala');toggleMobileMenu()">Nala AI</button>
+    <button onclick="showPage('mood');toggleMobileMenu()">Mood Tracker</button>
+    <button onclick="showPage('relax');toggleMobileMenu()">Relaxation</button>
+    <button onclick="showPage('edu');toggleMobileMenu()">MentalEdu</button>
+  </div>
+
+  <!-- =================== HOME PAGE =================== -->
+  <div id="page-home" class="page active">
+    <div class="home-hero">
+      <div class="hero-left">
+        <div class="hero-label">Teman Cerita Anda</div>
+        <h1 class="hero-title">Tenang, Kamu Tidak Sendiri</h1>
+        <p class="hero-sub">Nala hadir sebagai teman bercerita dan berkeluh kesah tentang apa yang mengganggumu. Pahami
+          dirimu bersama Nala!</p>
+        <div class="hero-btns">
+          <button class="btn-primary" onclick="showPage('nala')">Mulai</button>
+          <button class="btn-outline"
+            onclick="document.getElementById('cara-kerja').scrollIntoView({behavior:'smooth'})">Cara Kerja</button>
+        </div>
+      </div>
+      <div class="hero-visual">
+        <svg class="hero-brain-art" viewBox="0 0 340 340" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- Brain illustration -->
+          <circle cx="170" cy="170" r="155" fill="#d4edda" opacity="0.5" />
+          <!-- Brain shape -->
+          <path
+            d="M120 150 C100 130 85 110 95 90 C105 70 130 65 148 78 C155 60 175 52 195 60 C215 68 222 88 215 105 C235 100 255 110 255 130 C255 150 238 165 220 162 C225 178 220 198 205 205 C190 212 175 205 168 193 C162 208 148 218 132 214 C116 210 108 196 112 182 C95 178 85 162 92 148 C99 134 115 134 120 150Z"
+            fill="#5a9e6a" opacity="0.85" />
+          <path d="M168 78 C168 78 165 120 170 145 C175 170 168 193 168 193" stroke="#3a7d44" stroke-width="2"
+            stroke-dasharray="4,4" opacity="0.6" />
+          <!-- Books -->
+          <rect x="60" y="240" width="50" height="36" rx="6" fill="#3a7d44" opacity="0.8" />
+          <rect x="65" y="235" width="50" height="36" rx="6" fill="#5a9e6a" />
+          <rect x="70" y="230" width="50" height="36" rx="6" fill="#8aba8f" />
+          <!-- Window -->
+          <rect x="220" y="48" width="64" height="64" rx="10" fill="#d4edda" stroke="#5a9e6a" stroke-width="2" />
+          <line x1="252" y1="48" x2="252" y2="112" stroke="#5a9e6a" stroke-width="1.5" />
+          <line x1="220" y1="80" x2="284" y2="80" stroke="#5a9e6a" stroke-width="1.5" />
+          <!-- Birds -->
+          <path d="M260 30 Q264 25 268 30" stroke="#3a7d44" stroke-width="2" fill="none" />
+          <path d="M275 22 Q279 17 283 22" stroke="#3a7d44" stroke-width="2" fill="none" />
+          <path d="M245 38 Q248 34 251 38" stroke="#3a7d44" stroke-width="2" fill="none" />
+          <!-- Tea cup -->
+          <ellipse cx="88" cy="256" rx="22" ry="10" fill="#8aba8f" opacity="0.7" />
+          <rect x="66" y="248" width="44" height="18" rx="6" fill="#8aba8f" opacity="0.5" />
+          <!-- Flowers -->
+          <circle cx="300" cy="260" r="8" fill="#d4edda" />
+          <circle cx="286" cy="270" r="6" fill="#a8d5b0" />
+          <circle cx="298" cy="276" r="7" fill="#8aba8f" />
+          <line x1="295" y1="270" x2="295" y2="300" stroke="#5a9e6a" stroke-width="2" />
+          <!-- Waves on right brain -->
+          <path d="M195 105 Q210 115 205 130 Q200 145 210 158" stroke="#d4edda" stroke-width="2" fill="none"
+            opacity="0.8" />
+          <path d="M200 108 Q218 118 213 135 Q208 150 218 162" stroke="#d4edda" stroke-width="1.5" fill="none"
+            opacity="0.6" />
+          <!-- Stars / sparkles -->
+          <circle cx="145" cy="52" r="3" fill="#3a7d44" opacity="0.5" />
+          <circle cx="228" cy="175" r="2.5" fill="#3a7d44" opacity="0.4" />
+          <circle cx="60" cy="165" r="2" fill="#5a9e6a" opacity="0.5" />
+        </svg>
+      </div>
+    </div>
+
+    <!-- Features -->
+    <div class="section">
+      <h2 class="section-title">Fitur Unggulan</h2>
+      <div class="features-grid">
+        <div class="feature-card" onclick="showPage('nala')">
+          <div class="feature-icon">💬</div>
+          <div class="feature-name">NalaAI</div>
+          <div class="feature-desc">Ngobrol dengan AI yang memahami perasaanmu, kapan pun kamu butuh teman bicara.</div>
+        </div>
+        <div class="feature-card" onclick="showPage('mood')">
+          <div class="feature-icon">📊</div>
+          <div class="feature-name">Mood Tracker</div>
+          <div class="feature-desc">Catat mood harian dan pantau perkembangan emosimu dengan visualisasi menarik.</div>
+        </div>
+        <div class="feature-card" onclick="showPage('relax')">
+          <div class="feature-icon">🧘</div>
+          <div class="feature-name">Relax & Mindfulness</div>
+          <div class="feature-desc">Nikmati panduan napas, meditasi singkat, dan afirmasi positif untuk keseimbangan
+            mental.</div>
+        </div>
+        <div class="feature-card" onclick="showPage('edu')">
+          <div class="feature-icon">📚</div>
+          <div class="feature-name">Edukasi Mental Health</div>
+          <div class="feature-desc">Pelajari cara menjaga kesehatan mental melalui artikel dan tips sederhana.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- How it works -->
+    <div class="section" id="cara-kerja">
+      <h2 class="section-title">Bagaimana Cara Kerjanya?</h2>
+      <div class="steps-grid">
+        <div class="step-card">
+          <div class="step-num">1</div>
+          <div class="step-name">Mulai Chat</div>
+          <div class="step-desc">Ngobrol dengan AI yang memahami perasaanmu, kapan pun kamu butuh teman bicara.</div>
+        </div>
+        <div class="step-card">
+          <div class="step-num">2</div>
+          <div class="step-name">Analisis Emosi</div>
+          <div class="step-desc">Catat mood harian dan pantau perkembangan emosimu dengan visualisasi menarik.</div>
+        </div>
+        <div class="step-card">
+          <div class="step-num">3</div>
+          <div class="step-name">Dapatkan Dukungan</div>
+          <div class="step-desc">Nikmati panduan napas, meditasi singkat, dan afirmasi positif untuk keseimbangan
+            mental.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Privacy -->
+    <div class="section">
+      <h2 class="section-title">Keamanan & Privasi</h2>
+      <div class="privacy-box">
+        <p>Semua percakapan dienkripsi dan bersifat rahasia. Kami tidak menyimpan data pribadi tanpa izinmu.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- =================== NALA AI PAGE =================== -->
+  <div id="page-nala" class="page">
+    <div class="inner-page-content">
+      <div class="card chat-container">
+        <div class="card-header">
+          <h2>NalaAI</h2>
+        </div>
+        <div class="chat-messages" id="chatMessages">
+          <div class="chat-system-msg">Nala siap mendengarkan kamu</div>
+          <div class="msg-row ai">
+            <div class="msg-avatar">N</div>
+            <div>
+              <div class="msg-bubble">Halo! Saya Nala 🌿 Teman cerita dan berkeluh kesah mu. Apa yang ingin kamu
+                ceritakan hari ini?</div>
+              <div class="msg-time" id="initTime"></div>
+            </div>
+          </div>
+        </div>
+        <div class="chat-input-row">
+          <input class="chat-input" id="chatInput" type="text" placeholder="Ketik pesanmu disini..." maxlength="1000"
+            onkeydown="if(event.key==='Enter')sendMessage()">
+          <button class="btn-send" id="sendBtn" onclick="sendMessage()">Kirim</button>
+          <button class="btn-mic" id="micBtn" onclick="toggleVoice()" title="Pesan suara">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
+              <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+              <line x1="12" y1="19" x2="12" y2="23" />
+              <line x1="8" y1="23" x2="16" y2="23" />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =================== MOOD TRACKER PAGE =================== -->
+  <div id="page-mood" class="page">
+    <div class="inner-page-content">
+      <div class="card">
+        <div class="card-header">
+          <h2>Mood Tracker</h2>
+          <p>Catat suasana hatimu dan lihat perkembangannya dari waktu ke waktu</p>
+        </div>
+        <div class="mood-input-row">
+          <select class="mood-select" id="moodSelect">
+            <option value="">Pilih Suasana Hati...</option>
+            <option value="Sangat Senang">😄 Sangat Senang</option>
+            <option value="Senang">🙂 Senang</option>
+            <option value="Netral">😐 Netral</option>
+            <option value="Sedih">😔 Sedih</option>
+            <option value="Cemas">😰 Cemas</option>
+            <option value="Marah">😠 Marah</option>
+            <option value="Lelah">😴 Lelah</option>
+          </select>
+          <input class="mood-note-input" id="moodNote" type="text" placeholder="Catatan (opsional)..." maxlength="200">
+          <button class="btn-simpan" onclick="saveMood()">Simpan</button>
+        </div>
+        <div class="chart-wrap">
+          <canvas id="moodChart" height="120"></canvas>
+        </div>
+        <div class="mood-history-wrap">
+          <div class="mood-history-title">Riwayat Mood 📓</div>
+          <div class="mood-history-box" id="moodHistory"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =================== RELAXATION PAGE =================== -->
+  <div id="page-relax" class="page">
+    <div class="inner-page-content">
+      <div class="card">
+        <div class="card-header">
+          <h2>Relaksasi & Mindfulness</h2>
+          <p>Tenangkan diri dengan latihan napas, afirmasi positif, dan audio meditasi</p>
+        </div>
+
+        <!-- Breathing -->
+        <div class="relax-section">
+          <div class="relax-section-title">Latihan Napas</div>
+          <div class="breath-visual-wrap">
+            <div class="breath-circle-outer" id="breathCircle">
+              <svg width="40" height="40" viewBox="0 0 40 40">
+                <circle cx="20" cy="20" r="16" fill="rgba(255,255,255,0.35)" />
+                <path d="M14 18 Q20 12 26 18 Q20 26 14 18Z" fill="white" opacity="0.7" />
+              </svg>
+            </div>
+            <div class="breath-label" id="breathLabel">Siap memulai...</div>
+            <div class="breath-counter" id="breathCounter">Sesi: 0</div>
+            <button class="btn-relax" id="breathBtn" onclick="toggleBreath()">Mulai</button>
+          </div>
+        </div>
+
+        <!-- Affirmation -->
+        <div class="relax-section">
+          <div class="relax-section-title">Afirmasi Positif</div>
+          <div class="affirmation-box">
+            <div class="affirmation-text" id="affirmText">"Hari ini aku memilih untuk tenang dan bersyukur."</div>
+          </div>
+          <div style="text-align:center">
+            <button class="btn-relax" onclick="newAffirmation()">Tampilkan</button>
+          </div>
+        </div>
+
+        <!-- Audio Relaxation -->
+        <div class="relax-section">
+          <div class="relax-section-title">Audio Relaksasi</div>
+          <div class="relax-sub">Pilih suasana yang kamu inginkan</div>
+          <div class="ambient-sounds" id="ambientSounds">
+            <button class="ambient-btn" data-freq="174" onclick="playAmbient(this)">🌊 Ombak Laut</button>
+            <button class="ambient-btn" data-freq="528" onclick="playAmbient(this)">🌧️ Hujan Ringan</button>
+            <button class="ambient-btn" data-freq="432" onclick="playAmbient(this)">🌿 Hutan Tenang</button>
+            <button class="ambient-btn" data-freq="396" onclick="playAmbient(this)">🎵 Meditasi</button>
+            <button class="ambient-btn" onclick="stopAmbient(this)">⏹ Stop</button>
+          </div>
+          <div class="audio-player-wrap">
+            <button class="audio-play-btn" id="audioPlayBtn" onclick="toggleAmbientPlay()">
+              <svg id="playIcon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M8 5v14l11-7z" />
+              </svg>
+              <svg id="pauseIcon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="display:none">
+                <rect x="6" y="4" width="4" height="16" />
+                <rect x="14" y="4" width="4" height="16" />
+              </svg>
+            </button>
+            <div class="audio-progress-wrap">
+              <span class="audio-time" id="audioTimeLabel">0:00 / ∞</span>
+              <input type="range" class="audio-progress" id="audioProgress" min="0" max="100" value="0"
+                oninput="setAmbientVol(this.value)">
+            </div>
+            <button class="audio-vol" id="volIcon" onclick="toggleMute()">🔊</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =================== MENTAL EDU PAGE =================== -->
+  <div id="page-edu" class="page">
+    <div class="inner-page-content">
+      <div class="card">
+        <!-- Articles -->
+        <div class="edu-section">
+          <div class="edu-section-label">Artikel singkat berbasis riset</div>
+          <div class="articles-grid" id="articlesGrid"></div>
+        </div>
+
+        <!-- Daily Tip -->
+        <div class="edu-section">
+          <div class="edu-section-label">Tips Harian Menjaga Kestabilan Diri</div>
+          <div class="daily-tip-box">
+            <div class="daily-tip-text" id="dailyTipText">Klik tombol di bawah untuk mendapatkan tips hari ini 💡</div>
+          </div>
+          <div style="text-align:center">
+            <button class="btn-relax" onclick="newDailyTip()">Tampilkan</button>
+          </div>
+        </div>
+
+        <!-- Activities -->
+        <div class="edu-section">
+          <div class="edu-section-label">Aktivitas Positif untuk Hari Ini</div>
+          <div class="activities-list" id="activitiesList"></div>
+          <div class="add-activity-row">
+            <input class="add-activity-input" id="newActivityInput" type="text" placeholder="Tambah aktivitas baru..."
+              maxlength="100" onkeydown="if(event.key==='Enter')addActivity()">
+            <button class="btn-add" onclick="addActivity()">Tambah Aktivitas</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Article Modal -->
+  <div id="articleModal" style="display:none"></div>
+  <script src="./js/main.js"></script>
+</body>
+
+</html>
