@@ -432,6 +432,21 @@ function toggleMute() {
     }
 }
 
+// ===== KONTROL SLIDER UNTUK SKIP AUDIO =====
+const progressBar = document.getElementById('audioProgress');
+
+if (progressBar) {
+    progressBar.addEventListener('input', (e) => {
+        // Cek apakah ada audio yang sedang dimainkan dan punya durasi
+        if (currentAudio && currentAudio.duration) {
+            // Hitung detik ke berapa berdasarkan persentase tarikan slider
+            const seekTime = (e.target.value / 100) * currentAudio.duration;
+            // Ubah posisi waktu audio ke detik tersebut
+            currentAudio.currentTime = seekTime;
+        }
+    });
+}
+
 // ===== MENTAL EDU =====
 const articles = [
     {
