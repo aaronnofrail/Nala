@@ -353,29 +353,12 @@ function playAmbient(btn) {
     currentBtn = btn;
 
     const fileUrl = btn.dataset.file;
-    currentAudio = new Audio(fileUrl);
+    // 1. Bikin wadah audionya dulu (jangan masukkan URL-nya dulu)
+    currentAudio = new Audio();
     currentAudio.loop = true;
     currentAudio.volume = isMuted ? 0 : 1.0;
 
-    //  FITUR UPDATE WAKTU & SLIDER 
-    currentAudio.addEventListener('timeupdate', () => {
-        const currentTime = currentAudio.currentTime;
-        const duration = currentAudio.duration;
-
-        // Update teks angkanya 
-        const timeLabel = document.getElementById('audioTimeLabel');
-        if (timeLabel) {
-            timeLabel.textContent = `${formatTimeAudio(currentTime)} / ${formatTimeAudio(duration)}`;
-        }
-
-        // Update posisi slider hijau agar jalan sendiri
-        const progressBar = document.getElementById('audioProgress');
-        if (progressBar && duration) {
-            progressBar.value = (currentTime / duration) * 100;
-        }
-    });
-
-    // BACA TOTAL DURASI SAAT LAGU DIMUAT 
+    // 2. Pasang alat pendengar metadata & waktu SEBELUM audio dimuat
     currentAudio.addEventListener('loadedmetadata', () => {
         const timeLabel = document.getElementById('audioTimeLabel');
         if (timeLabel) {
@@ -383,14 +366,32 @@ function playAmbient(btn) {
         }
     });
 
+    currentAudio.addEventListener('timeupdate', () => {
+        const currentTime = currentAudio.currentTime;
+        const duration = currentAudio.duration;
 
+        const timeLabel = document.getElementById('audioTimeLabel');
+        if (timeLabel) {
+            timeLabel.textContent = `${formatTimeAudio(currentTime)} / ${formatTimeAudio(duration)}`;
+        }
+
+        const progressBar = document.getElementById('audioProgress');
+        if (progressBar && duration) {
+            progressBar.value = (currentTime / duration) * 100;
+        }
+    });
+
+    // 3. BARU kita masukkan URL file-nya agar browser mulai memuat
+    currentAudio.src = fileUrl;
+
+    // 4. Mainkan!
     currentAudio.play().then(() => {
         ambientPlaying = true;
         document.getElementById('playIcon').style.display = 'none';
         document.getElementById('pauseIcon').style.display = 'block';
     }).catch(err => {
         console.error("Gagal memutar audio:", err);
-        showToast("Gagal memutar audio. Pastikan file MP3 tersedia.");
+        showToast("Gagal memutar audio. Cek Console untuk detailnya.");
     });
 }
 
