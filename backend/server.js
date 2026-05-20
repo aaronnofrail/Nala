@@ -11,6 +11,10 @@ app.use(express.static('public'));
 require('dotenv').config();
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
+app.get('/', (req, res) => {
+    res.send('API Nala AI Backend Berjalan Mulus! 🌿');
+});
+
 app.post('/api/chat', async (req, res) => {
     try {
         const model = genAI.getGenerativeModel({
