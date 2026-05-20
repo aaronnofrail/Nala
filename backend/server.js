@@ -38,4 +38,4 @@ app.post('/api/chat', async (req, res) => {
     }
 });
 
-app.listen(3000, () => console.log('✅ Server Nala berjalan di port 3000 (Mode: Gemini SDK)'));
+module.exports = app;
