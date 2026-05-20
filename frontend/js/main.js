@@ -328,6 +328,12 @@ let ambientPlaying = false;
 let isMuted = false;
 let currentBtn = null;
 
+function formatTimeAudio(seconds) {
+    if (isNaN(seconds) || !isFinite(seconds)) return "0:00";
+    const min = Math.floor(seconds / 60);
+    const sec = Math.floor(seconds % 60);
+    return `${min}:${sec < 10 ? '0' : ''}${sec}`;
+}
 function stopAmbient(btn) {
     if (currentAudio) {
         currentAudio.pause();
@@ -350,6 +356,33 @@ function playAmbient(btn) {
     currentAudio = new Audio(fileUrl);
     currentAudio.loop = true;
     currentAudio.volume = isMuted ? 0 : 1.0;
+
+    //  FITUR UPDATE WAKTU & SLIDER 
+    currentAudio.addEventListener('timeupdate', () => {
+        const currentTime = currentAudio.currentTime;
+        const duration = currentAudio.duration;
+
+        // Update teks angkanya 
+        const timeLabel = document.getElementById('audioTimeLabel');
+        if (timeLabel) {
+            timeLabel.textContent = `${formatTimeAudio(currentTime)} / ${formatTimeAudio(duration)}`;
+        }
+
+        // Update posisi slider hijau agar jalan sendiri
+        const progressBar = document.getElementById('audioProgress');
+        if (progressBar && duration) {
+            progressBar.value = (currentTime / duration) * 100;
+        }
+    });
+
+    // BACA TOTAL DURASI SAAT LAGU DIMUAT 
+    currentAudio.addEventListener('loadedmetadata', () => {
+        const timeLabel = document.getElementById('audioTimeLabel');
+        if (timeLabel) {
+            timeLabel.textContent = `0:00 / ${formatTimeAudio(currentAudio.duration)}`;
+        }
+    });
+
 
     currentAudio.play().then(() => {
         ambientPlaying = true;
